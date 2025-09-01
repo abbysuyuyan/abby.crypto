@@ -1,43 +1,69 @@
-import requests, pandas as pd
-from datetime import datetime, timezone
-
+import requests, time, pandas as pd
+from datetime import datetime, date, timezone
 from google.colab import drive
+
 drive.mount('/content/drive')
 
-def fetch_json(url):
-    r = requests.get(url, timeout=60)
-    r.raise_for_status()
-    return r.json()
+OUTPUT_PATH = "/content/drive/MyDrive/solana_defillama_protocol_tvl.csv"
+REQUEST_PAUSE_S = 0.25  
+START_DAY = None        
+
+def fetch_json(url, retries=3, timeout=60):
+    for i in range(retries):
+        try:
+            r = requests.get(url, timeout=timeout)
+            r.raise_for_status()
+            return r.json()
+        except Exception:
+            if i == retries - 1: raise
+            time.sleep(1.0 + i)
+    return None
+
+def to_day(ts):
+    return datetime.fromtimestamp(int(ts), tz=timezone.utc).date()
 
 protocols = fetch_json("https://api.llama.fi/protocols")
 prot_df = pd.DataFrame(protocols)
-mask = prot_df["chains"].apply(lambda xs: "Solana" in xs if isinstance(xs, list) else False)
-prot_sol = prot_df[mask].copy()
+
+is_solana = prot_df["chains"].apply(lambda xs: isinstance(xs, list) and ("Solana" in xs))
+prot_sol = prot_df[is_solana].copy()
 
 rows = []
 for _, row in prot_sol.iterrows():
     slug = row["slug"] if pd.notna(row.get("slug")) else row["name"]
-    cat  = row.get("category", "Unknown")
+    category = row.get("category", "Unknown")
     try:
-        hist = fetch_json(f"https://api.llama.fi/protocol/{slug}")
-        chain_tvls = hist.get("chainTvls", {})
-        sol_series = chain_tvls.get("Solana", {}).get("tvl", None)
-        if not sol_series:
-            continue
-        df = pd.DataFrame(sol_series)
-        df["day"] = pd.to_datetime(df["date"], unit="s", utc=True).dt.date
+        data = fetch_json(f"https://api.llama.fi/protocol/{slug}")
+        series = (data or {}).get("chainTvls", {}).get("Solana", {}).get("tvl", None)
+        if not series:
+            time.sleep(REQUEST_PAUSE_S); continue
+        df = pd.DataFrame(series)
+        if df.empty: 
+            time.sleep(REQUEST_PAUSE_S); continue
+        df["day"] = df["date"].apply(to_day)
+        if START_DAY:
+            df = df[df["day"] >= START_DAY]
         df["protocol"] = row["name"]
-        df["category"] = cat
-        df = df.rename(columns={"totalLiquidityUSD": "tvl_usd"})
+        df["category"] = category
+        df.rename(columns={"totalLiquidityUSD":"tvl_usd"}, inplace=True)
         rows.append(df[["day","protocol","category","tvl_usd"]])
     except Exception:
-        continue
+        pass
+    finally:
+        time.sleep(REQUEST_PAUSE_S)
 
-prot_hist = pd.concat(rows, ignore_index=True) if rows else pd.DataFrame(columns=["day","protocol","category","tvl_usd"])
+prot_hist = (pd.concat(rows, ignore_index=True)
+             if rows else pd.DataFrame(columns=["day","protocol","category","tvl_usd"]))
 
-use_by_day = prot_hist.groupby(["day","category"], as_index=False)["tvl_usd"].sum()
+prot_hist = prot_hist.dropna(subset=["day","protocol","category","tvl_usd"])
+prot_hist = prot_hist[prot_hist["tvl_usd"] >= 0].copy()
 
-save_path = "/content/drive/MyDrive/solana_tvl_by_use.csv"
-use_by_day.to_csv(save_path, index=False)
+cat_hist = prot_hist.groupby(["day","category"], as_index=False)["tvl_usd"].sum()
+cat_hist["protocol"] = "ALL_PROTOCOLS"   
+full_hist = pd.concat([prot_hist, cat_hist], ignore_index=True)
 
-print(f"已存檔到: {save_path}")
+full_hist.to_csv(OUTPUT_PATH, index=False)
+
+print(f"✅ 已存檔到: {OUTPUT_PATH}")
+print("Preview:")
+print(full_hist.head(10))
