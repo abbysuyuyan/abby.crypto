@@ -27,6 +27,7 @@ atr AS (
     AVG(true_range) OVER (ORDER BY day ROWS BETWEEN 13 PRECEDING AND CURRENT ROW) AS atr14
   FROM tr
 )
+  
 SELECT
   day,
   close,
