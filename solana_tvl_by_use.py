@@ -5,8 +5,8 @@ from google.colab import drive
 drive.mount('/content/drive')
 
 OUTPUT_PATH = "/content/drive/MyDrive/solana_defillama_protocol_tvl.csv"
-REQUEST_PAUSE_S = 0.25  
-START_DAY = None        
+REQUEST_PAUSE_S = 0.25
+START_DAY = None
 
 def fetch_json(url, retries=3, timeout=60):
     for i in range(retries):
@@ -59,7 +59,7 @@ prot_hist = prot_hist.dropna(subset=["day","protocol","category","tvl_usd"])
 prot_hist = prot_hist[prot_hist["tvl_usd"] >= 0].copy()
 
 cat_hist = prot_hist.groupby(["day","category"], as_index=False)["tvl_usd"].sum()
-cat_hist["protocol"] = "ALL_PROTOCOLS"   
+cat_hist["protocol"] = "ALL_PROTOCOLS" 
 full_hist = pd.concat([prot_hist, cat_hist], ignore_index=True)
 
 full_hist.to_csv(OUTPUT_PATH, index=False)
