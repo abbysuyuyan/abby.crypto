@@ -1,5 +1,3 @@
-!pip install requests -q
-
 import requests, csv, datetime, time
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
