@@ -64,6 +64,6 @@ full_hist = pd.concat([prot_hist, cat_hist], ignore_index=True)
 
 full_hist.to_csv(OUTPUT_PATH, index=False)
 
-print(f" 已存檔到: {OUTPUT_PATH}")
+print(f" 已存檔: {OUTPUT_PATH}")
 print("Preview:")
 print(full_hist.head(10))
