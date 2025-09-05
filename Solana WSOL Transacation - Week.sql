@@ -1,4 +1,3 @@
--- Wide table: OUT / IN / NET per token (7D, by USD)
 WITH t AS (
   SELECT
     amount_usd,
