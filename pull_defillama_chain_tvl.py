@@ -1,3 +1,5 @@
+!pip install requests -q
+
 import requests, csv, datetime, time
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
@@ -8,7 +10,7 @@ drive.mount('/content/drive')
 URL_CHAINS = "https://api.llama.fi/v2/chains"
 BASE = "https://api.llama.fi/v2/historicalChainTvl/{}"
 OUT = "/content/defillama_chain_tvl_top30.csv"
-OUT_DRIVE = "/content/drive/MyDrive/defillama_chain_tvl_top30.csv"
+OUT_DRIVE = "/content/drive/MyDrive/crypto_analysis/defillama_chain_tvl_top30.csv"
 
 def make_session():
     s = requests.Session()
