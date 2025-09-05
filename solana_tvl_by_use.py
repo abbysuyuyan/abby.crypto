@@ -4,7 +4,7 @@ from google.colab import drive
 
 drive.mount('/content/drive')
 
-OUTPUT_PATH = "/content/drive/MyDrive/solana_defillama_protocol_tvl.csv"
+OUTPUT_PATH = "/content/drive/MyDrive/crypto_analysis/solana_defillama_protocol_tvl.csv"
 REQUEST_PAUSE_S = 0.25
 START_DAY = None
 
@@ -38,7 +38,7 @@ for _, row in prot_sol.iterrows():
         if not series:
             time.sleep(REQUEST_PAUSE_S); continue
         df = pd.DataFrame(series)
-        if df.empty: 
+        if df.empty:
             time.sleep(REQUEST_PAUSE_S); continue
         df["day"] = df["date"].apply(to_day)
         if START_DAY:
@@ -59,11 +59,11 @@ prot_hist = prot_hist.dropna(subset=["day","protocol","category","tvl_usd"])
 prot_hist = prot_hist[prot_hist["tvl_usd"] >= 0].copy()
 
 cat_hist = prot_hist.groupby(["day","category"], as_index=False)["tvl_usd"].sum()
-cat_hist["protocol"] = "ALL_PROTOCOLS" 
+cat_hist["protocol"] = "ALL_PROTOCOLS"
 full_hist = pd.concat([prot_hist, cat_hist], ignore_index=True)
 
 full_hist.to_csv(OUTPUT_PATH, index=False)
 
-print(f" 已存檔: {OUTPUT_PATH}")
+print(f"已存檔到: {OUTPUT_PATH}")
 print("Preview:")
 print(full_hist.head(10))
