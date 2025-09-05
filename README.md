@@ -1,4 +1,4 @@
 Most of the portfolios are coded with DuneSQL (Dune Analytics), some with Python (Colab)
 
 
-![](https://komarev.com/ghpvc/?username=abbysuyuyan)
+![](https://komarev.com/ghpvc/?username=abbysuyuyan&color=9945FF)
