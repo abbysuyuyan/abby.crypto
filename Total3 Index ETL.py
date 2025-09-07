@@ -1,5 +1,3 @@
-!pip install requests pandas matplotlib
-
 from google.colab import drive
 import os
 
