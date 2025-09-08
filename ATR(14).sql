@@ -10,6 +10,7 @@ WITH daily AS (
     AND minute >= current_date - interval '110' day   
   GROUP BY 1
 ),
+  
 tr AS (
   SELECT
     day, open, high, low, close,
@@ -20,6 +21,7 @@ tr AS (
     ) AS true_range
   FROM daily
 ),
+  
 atr AS (
   SELECT
     day,
