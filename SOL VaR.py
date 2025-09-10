@@ -51,7 +51,7 @@ class SOLVaRCalculator:
         """
         從 Yahoo Finance 獲取 SOL 價格數據（2年）
         """
-        print("\n📡 正在從 Yahoo Finance 下載數據...")
+        print("\n 正在從 Yahoo Finance 下載數據")
         
         try:
             sol = yf.Ticker(self.ticker)
@@ -492,10 +492,6 @@ if __name__ == "__main__":
     results = calculator.run_analysis()
     
     if results['success']:
-        print("\n🎉 恭喜！分析成功完成")
-        print("\n💡 提示：")
-        print("1. 結果已自動儲存到 Google Drive")
-        print("2. 您可以在 /My Drive/crypto_analysis/ 找到所有檔案")
-        print("3. 包含 JSON 數據、文字報告和圖表")
+        print("\n🎉 分析完成")
     else:
         print(f"\n分析失敗: {results.get('error', 'Unknown error')}")
