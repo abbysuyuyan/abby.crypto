@@ -14,20 +14,9 @@ warnings.filterwarnings('ignore')
 plt.rcParams['font.sans-serif'] = ['DejaVu Sans']
 plt.rcParams['axes.unicode_minus'] = False
 
-class SOLVaRCalculator:
-    """
-    SOL 幣蒙地卡羅 VaR 計算器
-    使用 Yahoo Finance 數據源
-    """
-    
+class SOLVaRCalculator: 
     def __init__(self, portfolio_value=100000, num_simulations=50000):
-        """
-        初始化計算器
-        
-        參數:
-        portfolio_value: 投資組合價值（美元）
-        num_simulations: 模擬次數
-        """
+
         self.portfolio_value = portfolio_value
         self.num_simulations = num_simulations
         self.ticker = "SOL-USD"
@@ -48,9 +37,6 @@ class SOLVaRCalculator:
         print("="*60)
     
     def fetch_price_data(self):
-        """
-        從 Yahoo Finance 獲取 SOL 價格數據（2年）
-        """
         print("\n 正在從 Yahoo Finance 下載數據")
         
         try:
@@ -78,12 +64,6 @@ class SOLVaRCalculator:
             return None
     
     def calculate_statistics(self, df):
-        """
-        計算統計參數
-        
-        參數:
-        df: 價格數據 DataFrame
-        """
         print("\n🧮 計算統計參數...")
         
         returns = np.log(df['price'] / df['price'].shift(1)).dropna()
@@ -129,12 +109,6 @@ class SOLVaRCalculator:
         return stats
     
     def monte_carlo_simulation(self, stats):
-        """
-        執行蒙地卡羅模擬
-        
-        參數:
-        stats: 統計參數字典
-        """
         print(f"\n🎰 執行蒙地卡羅模擬 ({self.num_simulations:,} 次)...")
         
         mu = stats['mean_return']
@@ -164,12 +138,6 @@ class SOLVaRCalculator:
         return results
     
     def calculate_var(self, simulation_results):
-        """
-        計算 VaR 和 CVaR
-        
-        參數:
-        simulation_results: 模擬結果
-        """
         print("\n📊 計算風險價值 (VaR)...")
         
         portfolio_changes = simulation_results['portfolio_changes']
@@ -215,15 +183,6 @@ class SOLVaRCalculator:
         return var_results
     
     def plot_results(self, df, stats, simulation_results, var_results):
-        """
-        繪製分析圖表
-        
-        參數:
-        df: 價格數據
-        stats: 統計參數
-        simulation_results: 模擬結果
-        var_results: VaR 結果
-        """
         print("\n📈 生成分析圖表...")
         
         fig = plt.figure(figsize=(15, 10))
@@ -309,14 +268,6 @@ class SOLVaRCalculator:
         return fig_path
     
     def save_results(self, stats, var_results, simulation_results):
-        """
-        儲存結果到 Google Drive
-        
-        參數:
-        stats: 統計參數
-        var_results: VaR 結果
-        simulation_results: 模擬結果
-        """
         print(f"\n💾 儲存結果到 Google Drive...")
         
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -374,14 +325,6 @@ class SOLVaRCalculator:
         return json_path, report_path
     
     def generate_report(self, stats, var_results, simulation_results):
-        """
-        生成文字報告
-        
-        參數:
-        stats: 統計參數
-        var_results: VaR 結果
-        simulation_results: 模擬結果
-        """
         report = f"""
 {'='*70}
                 SOL 幣風險價值 (VaR) 分析報告
@@ -441,9 +384,6 @@ class SOLVaRCalculator:
         return report
     
     def run_analysis(self):
-        """
-        執行完整分析流程
-        """
         print("\n🔄 開始執行 SOL 幣 VaR 分析...\n")
         
         try:
