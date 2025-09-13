@@ -1,47 +1,67 @@
-WITH src AS (  
-  SELECT block_time, token_sold_symbol, token_bought_symbol
+WITH daily_trades AS (
+  SELECT 
+    DATE_TRUNC('day', block_time) AS day,
+    token_sold_symbol,
+    token_bought_symbol
   FROM dex_solana.trades
-  WHERE block_time >= date_add('day', -364, date_trunc('week', now()))
-    AND (
-      COALESCE(token_sold_symbol,   '') <> '' OR
-      COALESCE(token_bought_symbol, '') <> ''
-    )
+  WHERE block_time >= CURRENT_DATE - INTERVAL '365' DAY
+    AND block_time < CURRENT_DATE
+    AND (token_sold_symbol != '' OR token_bought_symbol != '')
 ),
-legs AS (  
-  SELECT
-    CAST(date_trunc('week', block_time) AS date) AS week,
-    tok AS token
-  FROM src
-  CROSS JOIN UNNEST(ARRAY[
-    COALESCE(NULLIF(token_sold_symbol,   ''), 'Unknown'),
-    COALESCE(NULLIF(token_bought_symbol, ''), 'Unknown')
-  ]) AS u(tok)
+token_legs AS (
+  -- 賣出的 token
+  SELECT 
+    day,
+    COALESCE(NULLIF(token_sold_symbol, ''), 'Unknown') AS token
+  FROM daily_trades
+  WHERE token_sold_symbol IS NOT NULL
+  
+  UNION ALL
+  
+  -- 買入的 token
+  SELECT 
+    day,
+    COALESCE(NULLIF(token_bought_symbol, ''), 'Unknown') AS token
+  FROM daily_trades
+  WHERE token_bought_symbol IS NOT NULL
 ),
-counts AS (
-  SELECT week, token, COUNT(*) AS tx_count
-  FROM legs
-  GROUP BY 1,2
+-- 聚合
+daily_counts AS (
+  SELECT 
+    day,
+    token,
+    COUNT(*) AS tx_count
+  FROM token_legs
+  GROUP BY 1, 2
 ),
 ranked AS (
   SELECT
-    week,
+    day,
     token,
     tx_count,
-    ROW_NUMBER() OVER (PARTITION BY week ORDER BY tx_count DESC) AS rn
-  FROM counts
+    ROW_NUMBER() OVER (PARTITION BY day ORDER BY tx_count DESC) AS rn
+  FROM daily_counts
+  WHERE tx_count > 0  
 ),
-bucketed AS (
+-- 最終分組和計算
+final_result AS (
   SELECT
-    week,
-    CASE WHEN rn <= 15 THEN token ELSE 'Others' END AS token_bucket,
+    day,
+    CASE 
+      WHEN rn <= 15 THEN token 
+      ELSE 'Others' 
+    END AS token_bucket,
     SUM(tx_count) AS tx_count
   FROM ranked
-  GROUP BY 1,2
+  GROUP BY 1, 2
 )
 SELECT
-  week,
+  day,
   token_bucket,
   tx_count,
-  ROUND(100.0 * tx_count / NULLIF(SUM(tx_count) OVER (PARTITION BY week), 0), 2) AS share_pct
-FROM bucketed
-ORDER BY week, token_bucket;
+  ROUND(
+    100.0 * tx_count / SUM(tx_count) OVER (PARTITION BY day),
+    2
+  ) AS share_pct
+FROM final_result
+ORDER BY day DESC, tx_count DESC;
