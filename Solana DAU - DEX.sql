@@ -4,7 +4,6 @@ params AS (
     date_trunc('day', now()) - INTERVAL '1' YEAR AS start_ts,
     date_trunc('day', now()) AS end_ts
 ),
--- GROUP BY 壓縮數據
 daily_users_compressed AS (
   SELECT
     date_trunc('day', block_time) AS day,
